@@ -4,8 +4,67 @@ frontend:
     repository: kubespheredev/oauth2-proxy-frontend
     tag: latest
 
-backend:
+oauth2-proxy:
   enabled: true
   image:
-    repository: kubespheredev/oauth2-proxy-api
-    tag: latest
+    repository: quay.io/oauth2-proxy/oauth2-proxy
+    tag: ""
+  config:
+    # OAuth client ID
+    clientID: "kubesphere"
+    # OAuth client secret
+    clientSecret: "kubesphere"
+    # Create a new secret with the following command
+    # openssl rand -base64 32 | head -c 32 | base64
+    # Use an existing secret for OAuth2 credentials (see secret.yaml for required fields)
+    # Example:
+    # existingSecret: secret
+    cookieSecret: "IwwLQh_8mE-tRjgLmOhoqiBhQIL6AaRFNXRT9zopNG8="
+
+  extraArgs: 
+    provider: oidc
+    provider-display-name: "ks-apiserver"
+    cookie-secure: false
+    cookie-refresh: 20m
+    cookie-name: oauth2-proxy
+    cookie-csrf-expire: 15m
+    cookie-csrf-per-request: true
+    # service redirect address
+    redirect-url: https://172.31.73.155:30009/oauth2/callback
+    # issuer address
+    oidc-issuer-url: http://172.31.73.155:30881/oauth
+    # upstream
+    upstream: http://prometheus-k8s.monitoring.svc:9090/
+    # tls config
+    # tls-cert-file: /etc/oauth2-proxy/certs/tls.crt  
+    # tls-key-file: /etc/oauth2-proxy/certs/tls.key
+
+  service:
+    type: ClusterIP
+    # when service.type is ClusterIP ...
+    # clusterIP: 192.0.2.20
+    # when service.type is LoadBalancer ...
+    # loadBalancerIP: 198.51.100.40
+    # loadBalancerSourceRanges: 203.0.113.0/24
+    # when service.type is NodePort ...
+    # nodePort: 30080
+    portNumber: 80
+    # Protocol set on the service
+    appProtocol: http
+    annotations: {}
+    # foo.io/bar: "true"
+
+
+  # whether to use http or https
+  httpScheme: http
+
+  extraVolumes: []
+  # mount tls certs
+  # - name: tls-cert
+  #   secret:
+  #     secretName: oauth2-proxy-tls-assets
+
+  extraVolumeMounts: []
+  # mount tls certs
+  # - mountPath: /etc/oauth2-proxy/certs/
+  #   name: tls-cert
