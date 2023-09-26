@@ -1,0 +1,11 @@
+frontend:
+  enabled: true
+  image:
+    repository: kubespheredev/oauth2-proxy-frontend
+    tag: latest
+
+backend:
+  enabled: true
+  image:
+    repository: kubespheredev/oauth2-proxy-api
+    tag: latest
