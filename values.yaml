@@ -45,24 +45,24 @@ oauth2-proxy:
     cookie-csrf-expire: 15m
     cookie-csrf-per-request: true
     # service redirect address
-    redirect-url: https://172.31.73.155:30009/oauth2/callback
+    redirect-url: http://172.31.73.155:30080/oauth2/callback
     # issuer address
     oidc-issuer-url: http://172.31.73.155:30881/oauth
     # upstream
-    upstream: http://prometheus-k8s.monitoring.svc:9090/
+    upstream: http://oauth2-proxy-openresty:80/
     # tls config
     # tls-cert-file: /etc/oauth2-proxy/certs/tls.crt  
     # tls-key-file: /etc/oauth2-proxy/certs/tls.key
 
   service:
-    type: ClusterIP
+    type: NodePort
     # when service.type is ClusterIP ...
     # clusterIP: 192.0.2.20
     # when service.type is LoadBalancer ...
     # loadBalancerIP: 198.51.100.40
     # loadBalancerSourceRanges: 203.0.113.0/24
     # when service.type is NodePort ...
-    # nodePort: 30080
+    nodePort: 30080
     portNumber: 80
     # Protocol set on the service
     appProtocol: http
