@@ -49,7 +49,7 @@ oauth2-proxy:
     # issuer address
     oidc-issuer-url: http://172.31.73.155:30881/oauth
     # upstream
-    upstream: http://oauth2-proxy-openresty:80/
+    upstream: http://oauth2-proxy-agent-openresty:80/
     # tls config
     # tls-cert-file: /etc/oauth2-proxy/certs/tls.crt  
     # tls-key-file: /etc/oauth2-proxy/certs/tls.key
