@@ -2,42 +2,46 @@ apiVersion: kubesphere.io/v1alpha1
 name: oauth2-proxy
 version: 0.1.0
 displayName:
-  zh: 示例扩展组件
-  en: Sample Extension
+  zh: Oauth2-Proxy 
+  en: Oauth2-Proxy 
 description:
-  zh: 这是一个示例扩展组件，这是它的描述
-  en: This is a sample extension, and this is its description
+  zh: Oauth2-Proxy 是一个反向代理，提供与Google, Azure, OpenID Connect等更多身份提供者的身份验证。
+  en: A reverse proxy that provides authentication with Google, Azure, OpenID Connect and many more identity providers.
 category: security
 keywords:
   - security
+  - oauth2-proxy
+  - oauth2
+  - authentication
 home: https://kubesphere.io
 sources:
-  - https://github.com/kubesphere
+  - https://github.com/frezes/oauth2-proxy
+  - https://github.com/oauth2-proxy/oauth2-proxy
 kubeVersion: ">=1.19.0"
 ksVersion: ">=4.0.0-alpha"
 maintainers:
   - name: "frezes"
     email: "junhaozhang@kubesphere.io"
-    url: ""
+    url: "https://github.com/frezes"
 provider:
   en:
     name: "frezes"
     email: "junhaozhang@kubesphere.io"
-    url: ""
+    url: "https://github.com/frezes"
 icon: ./static/favicon.svg
 screenshots:
-  - ./static/screenshots/screenshot.png
+  - ./static/screenshots/architecture.png
 dependencies:
-  - name: frontend
+  - name: openresty
     tags:
     - extension
-  - name: backend
+  - name: oauth2-proxy
     tags:
-    - agent
+    - extension
 # installationMode describes how to install subcharts, it can be HostOnly or Multicluster.
 # In Multicluster mode, the subchart with tag `extension` will only be deployed to the host cluster,
 # and the subchart with tag `agent` will be deployed to all selected clusters.
-installationMode: HostOnly
+installationMode: agent
 # external dependencies example
 #externalDependencies:
 #  - name: a
