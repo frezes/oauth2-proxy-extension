@@ -192,11 +192,15 @@ extraContainers: []
 
 priorityClassName: ""
 
-# Host aliases, useful when working "on premise" where (public) DNS resolver does not know about my hosts.
-hostAlias:
-  enabled: false
-  # ip: "10.xxx.xxx.xxx"
-  # hostname: "auth.example.com"
+# hostAliases is a list of aliases to be added to /etc/hosts for network name resolution
+hostAliases: []
+# - ip: "10.xxx.xxx.xxx"
+#   hostnames:
+#     - "auth.example.com"
+# - ip: 127.0.0.1
+#   hostnames:
+#     - chart-example.local
+#     - example.local
 
 # [TopologySpreadConstraints](https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/) configuration.
 # Ref: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
@@ -273,6 +277,9 @@ initContainers:
   # if service account is enabled
   waitForRedis:
     enabled: true
+    image:
+      repository: "docker.io/bitnami/kubectl"
+      pullPolicy: "IfNotPresent"
     # uses the kubernetes version of the cluster
     # the chart is deployed on, if not set
     kubectlVersion: ""
@@ -289,6 +296,13 @@ initContainers:
       seccompProfile:
         type: RuntimeDefault
     timeout: 180
+    resources: {}
+      # limits:
+      #   cpu: 100m
+      #   memory: 300Mi
+      # requests:
+      #   cpu: 100m
+      #   memory: 300Mi
 
 # Additionally authenticate against a htpasswd file. Entries must be created with "htpasswd -B" for bcrypt encryption.
 # Alternatively supply an existing secret which contains the required information.
@@ -346,6 +360,13 @@ redis:
 # Enables apiVersion deprecation checks
 checkDeprecation: true
 
+# Allows graceful shutdown
+# terminationGracePeriodSeconds: 65
+# lifecycle:
+#   preStop:
+#     exec:
+#       command: [ "sh", "-c", "sleep 60" ]
+
 metrics:
   # Enable Prometheus metrics endpoint
   enabled: true
@@ -356,7 +377,7 @@ metrics:
   # Protocol set on the service for the metrics port
   service:
     appProtocol: http
-  servicemonitor:
+  serviceMonitor:
     # Enable Prometheus Operator ServiceMonitor
     enabled: false
     # Define the namespace where to deploy the ServiceMonitor resource
@@ -369,6 +390,37 @@ metrics:
     scrapeTimeout: 30s
     # Add custom labels to the ServiceMonitor resource
     labels: {}
+
+    ## scheme: HTTP scheme to use for scraping. Can be used with `tlsConfig` for example if using istio mTLS.
+    scheme: ""
+
+    ## tlsConfig: TLS configuration to use when scraping the endpoint. For example if using istio mTLS.
+    ## Of type: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig
+    tlsConfig: {}
+
+    ## bearerTokenFile: Path to bearer token file.
+    bearerTokenFile: ""
+
+    ## Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+    annotations: {}
+
+    ## Metric relabel configs to apply to samples before ingestion.
+    ## [Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)
+    metricRelabelings: []
+    # - action: keep
+    #   regex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'
+    #   sourceLabels: [__name__]
+
+    ## Relabel configs to apply to samples before ingestion.
+    ## [Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)
+    relabelings: []
+    # - sourceLabels: [__meta_kubernetes_pod_node_name]
+    #   separator: ;
+    #   regex: ^(.*)$
+    #   targetLabel: nodename
+    #   replacement: $1
+    #   action: replace
 
 # Extra K8s manifests to deploy
 extraObjects: []

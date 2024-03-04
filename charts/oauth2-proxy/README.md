@@ -123,9 +123,7 @@ Parameter | Description | Default
 `extraEnv` | key:value list of extra environment variables to give the binary | `[]`
 `extraVolumes` | list of extra volumes | `[]`
 `extraVolumeMounts` | list of extra volumeMounts | `[]`
-`hostAlias.enabled`  | provide extra ip:hostname alias for network name resolution.
-`hostAlias.ip`  | `ip` address `hostAliases.hostname` should resolve to.
-`hostAlias.hostname`  | `hostname` associated to `hostAliases.ip`.
+`hostAliases`  | hostAliases is a list of aliases to be added to /etc/hosts for network name resolution.
 `htpasswdFile.enabled` | enable htpasswd-file option | `false`
 `htpasswdFile.entries` | list of [encrypted user:passwords](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview#command-line-options) | `{}`
 `htpasswdFile.existingSecret` | existing Kubernetes secret to use for OAuth2 htpasswd file | `""`
@@ -144,9 +142,12 @@ Parameter | Description | Default
 `ingress.hosts` | Ingress accepted hostnames | `nil`
 `ingress.tls` | Ingress TLS configuration | `nil`
 `initContainers.waitForRedis.enabled` | if `redis.enabled` is true, use an init container to wait for the redis master pod to be ready. If `serviceAccount.enabled` is true, create additionally a role/binding to get, list and watch the redis master pod | `true`
+`initContainers.waitForRedis.image.pullPolicy` | kubectl image pull policy | `IfNotPresent`
+`initContainers.waitForRedis.image.repository` | kubectl image repository | `docker.io/bitnami/kubectl`
 `initContainers.waitForRedis.kubectlVersion` | kubectl version to use for the init container | `printf "%s.%s" .Capabilities.KubeVersion.Major (.Capabilities.KubeVersion.Minor | replace "+" "")`
 `initContainers.waitForRedis.securityContext.enabled` | enable Kubernetes security context on container | `true`
 `initContainers.waitForRedis.timeout` | number of seconds | 180
+`initContainers.waitForRedis.resources` | pod resource requests & limits | `{}`
 `livenessProbe.enabled`  | enable Kubernetes livenessProbe. Disable to use oauth2-proxy with Istio mTLS. See [Istio FAQ](https://istio.io/help/faq/security/#k8s-health-checks) | `true`
 `livenessProbe.initialDelaySeconds` | number of seconds | 0
 `livenessProbe.timeoutSeconds` | number of seconds | 1
@@ -199,12 +200,18 @@ Parameter | Description | Default
 `metrics.port` | Serve Prometheus metrics on this port | `44180`
 `metrics.nodePort` | External port for the metrics when service.type is `NodePort` | `nil`
 `metrics.service.appProtocol` | application protocol of the metrics port in the service | `http`
-`metrics.servicemonitor.enabled` | Enable Prometheus Operator ServiceMonitor | `false`
-`metrics.servicemonitor.namespace` | Define the namespace where to deploy the ServiceMonitor resource | `""`
-`metrics.servicemonitor.prometheusInstance` | Prometheus Instance definition | `default`
-`metrics.servicemonitor.interval` | Prometheus scrape interval | `60s`
-`metrics.servicemonitor.scrapeTimeout` | Prometheus scrape timeout | `30s`
-`metrics.servicemonitor.labels` | Add custom labels to the ServiceMonitor resource| `{}`
+`metrics.serviceMonitor.enabled` | Enable Prometheus Operator ServiceMonitor | `false`
+`metrics.serviceMonitor.namespace` | Define the namespace where to deploy the ServiceMonitor resource | `""`
+`metrics.serviceMonitor.prometheusInstance` | Prometheus Instance definition | `default`
+`metrics.serviceMonitor.interval` | Prometheus scrape interval | `60s`
+`metrics.serviceMonitor.scrapeTimeout` | Prometheus scrape timeout | `30s`
+`metrics.serviceMonitor.labels` | Add custom labels to the ServiceMonitor resource| `{}`
+`metrics.serviceMonitor.scheme` | HTTP scheme to use for scraping. Can be used with `tlsConfig` for example if using istio mTLS.| `""`
+`metrics.serviceMonitor.tlsConfig` | TLS configuration to use when scraping the endpoint. For example if using istio mTLS.| `{}`
+`metrics.serviceMonitor.bearerTokenFile` | Path to bearer token file.| `""`
+`metrics.serviceMonitor.annotations` | Used to pass annotations that are used by the Prometheus installed in your cluster| `{}`
+`metrics.serviceMonitor.metricRelabelings` | Metric relabel configs to apply to samples before ingestion.| `[]`
+`metrics.serviceMonitor.relabelings` | Relabel configs to apply to samples before ingestion.| `[]`
 `extraObjects` | Extra K8s manifests to deploy | `[]`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
