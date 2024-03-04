@@ -3,21 +3,21 @@ openresty:
   image:
     repository: openresty/openresty
     tag: "1.21.4.1-0-alpine"
-  configs: 
-    - name: prometheus
-      description: KubeSphere 监控栈内部 Prometheus 端点
-      subPath: /prometheus/
-      endpoint: http://prometheus-k8s.monitoring.svc:9090/
-      additional:
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    - name: alertmanager
-      description: KubeSphere 监控栈内部 Alertmanager 端点
-      subPath: /alertmanager/
-      endpoint: http://alertmanager-main.monitoring.svc:9093/
-      additional:
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+  configs: []
+  # - name: prometheus
+  #   description: KubeSphere 监控栈内部 Prometheus 端点
+  #   subPath: /prometheus/
+  #   endpoint: http://prometheus-k8s.monitoring.svc:9090/
+  #   additional:
+  #     proxy_set_header Host $host;
+  #     proxy_set_header X-Real-IP $remote_addr;
+  # - name: alertmanager
+  #   description: KubeSphere 监控栈内部 Alertmanager 端点
+  #   subPath: /alertmanager/
+  #   endpoint: http://alertmanager-main.monitoring.svc:9093/
+  #   additional:
+  #     proxy_set_header Host $host;
+  #     proxy_set_header X-Real-IP $remote_addr;
 
 oauth2-proxy:
   enabled: true
@@ -45,11 +45,11 @@ oauth2-proxy:
     cookie-csrf-expire: 15m
     cookie-csrf-per-request: true
     # service redirect address
-    redirect-url: http://172.31.73.155:30080/oauth2/callback
+    redirect-url: http://172.31.73.76:32080/oauth2/callback
     # issuer address
-    oidc-issuer-url: http://172.31.73.155:30881/oauth
+    oidc-issuer-url: http://172.31.73.76:30880
     # upstream
-    upstream: http://oauth2-proxy-agent-openresty:80/
+    upstream: http://oauth2-proxy-openresty.extension-oauth2-proxy.svc:80/
     # tls config
     # tls-cert-file: /etc/oauth2-proxy/certs/tls.crt  
     # tls-key-file: /etc/oauth2-proxy/certs/tls.key
@@ -62,7 +62,7 @@ oauth2-proxy:
     # loadBalancerIP: 198.51.100.40
     # loadBalancerSourceRanges: 203.0.113.0/24
     # when service.type is NodePort ...
-    nodePort: 30080
+    nodePort: 32080
     portNumber: 80
     # Protocol set on the service
     appProtocol: http
