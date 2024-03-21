@@ -26,9 +26,9 @@ oauth2-proxy:
     tag: ""
   config:
     # OAuth client ID
-    clientID: "kubesphere"
+    clientID: "oauth2-proxy"
     # OAuth client secret
-    clientSecret: "kubesphere"
+    clientSecret: "oauth2-proxy"
     # Create a new secret with the following command
     # openssl rand -base64 32 | head -c 32 | base64
     # Use an existing secret for OAuth2 credentials (see secret.yaml for required fields)
@@ -45,9 +45,9 @@ oauth2-proxy:
     cookie-csrf-expire: 15m
     cookie-csrf-per-request: true
     # service redirect address
-    redirect-url: http://172.31.73.76:32080/oauth2/callback
+    redirect-url: http://172.31.73.114:32080/oauth2/callback
     # issuer address
-    oidc-issuer-url: http://172.31.73.76:30880
+    oidc-issuer-url: http://172.31.73.114:30880
     # upstream
     upstream: http://oauth2-proxy-openresty.extension-oauth2-proxy.svc:80/
     # tls config
