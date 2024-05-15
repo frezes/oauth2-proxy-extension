@@ -85,14 +85,34 @@ oauth2-proxy:
 ```yaml
 openresty:
   configs:
-  - name: alertmanager
-    description: KubeSphere 监控栈内部 Alertmanager 端点
-    subPath: /alertmanager/
-    endpoint: http://alertmanager-main.monitoring.svc:9093/
-    additional:
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
+    - name: alertmanager
+      description: KubeSphere 监控栈内部 Alertmanager 端点
+      subPath: /alertmanager/
+      endpoint: http://whizard-notification-alertmanager.kubesphere-monitoring-system.svc:9093/
+      additional:
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    - name: prometheus
+      description: KubeSphere 监控栈内部 Prometheus 端点
+      subPath: /prometheus/
+      endpoint: http://prometheus-agent-operated.kubesphere-monitoring-system.svc:9090/
+      additional:
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    - name: whizard
+      description: KubeSphere 监控栈内部 Whizard Query UI
+      subPath: /whizard/
+      endpoint: http://query-frontend-whizard-operated.kubesphere-monitoring-system.svc:10902/
+      additional:
+        proxy_set_header X-Forwarded-Prefix /whizard;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
 ```
+
+> 注:
+>
+> 1. prometheus CR 需要增加 `routePrefix: /` 和 `externalUrl: /prometheus/`，配置其 subPath；
+> 2. whizard 需要在 `queries.monitoring.whizard.io` CR 中增加 `flags: ["--web.prefix-header=X-Forwarded-Prefix"]`，允许[动态配置 subpath](https://thanos.io/tip/components/query.md/#expose-ui-on-a-sub-path)；
 
 同时通过 OAuth2-Proxy 认证登录后，我们会在首页看到 Alertmanager 服务的入口，点击即可访问。
 
