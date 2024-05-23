@@ -1,6 +1,7 @@
 openresty:
   enabled: true
   image:
+    registry: docker.io
     repository: openresty/openresty
     tag: "1.21.4.1-0-alpine"
   configs: []
