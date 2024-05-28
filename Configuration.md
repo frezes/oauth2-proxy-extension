@@ -33,7 +33,7 @@ data:
 如不一致，可通过 `helm upgrade --set portal.hostname=xx.xx.xx.xx` 更新
 
 ```sh
-helm upgrade --install -n kubesphere-system --create-namespace ks-core  https://charts.kubesphere.io/test/ks-core-0.6.13.tgz --debug --wait  --set global.tag=$(echo "nightly-$(TZ=Asia/Shanghai date +"%Y%m%d")") --set portal.hostname=172.31.73.114
+helm upgrade --install -n kubesphere-system --create-namespace ks-core  https://charts.kubesphere.io/test/ks-core-1.0.0.tgz --debug --wait  --set portal.hostname=172.31.73.114
 ```
 
 增加 `secret` oauthclient-oauth2-proxy, 确认 redirectURIs 地址
@@ -63,19 +63,28 @@ stringData:
 
 ### 1.3 更新 OAuth2-Proxy 扩展组件配置
 
-更新 OAuth2-Proxy 扩展组件配置，确认 `redirect-url` `oidc-issuer-url` 地址及服务暴露方式
+更新 OAuth2-Proxy 扩展组件配置，确认 `redirect-url` `oidc-issuer-url` 地址及 openresty `domain` 和 `service` 服务暴露方式
 
 ```yaml
+openresty:
+  domain: 'http://172.31.19.4:32080'
+  authentication: 
+    enabled: true  # 白名单认证
+    blacklist: 
+      - admin@kubesphere.io
+
+  service:
+    type: NodePort
+    portNumber: 80
+    nodePort: 32080
+    annotations: {}
+
 oauth2-proxy:
   extraArgs: 
     # service redirect address
     redirect-url: http://172.31.73.114:32080/oauth2/callback
     # issuer address
     oidc-issuer-url: http://172.31.73.114:30880
-
-  service:
-    type: NodePort
-    nodePort: 32080
 ```
 
 ## 2. openresty 代理未认证的服务

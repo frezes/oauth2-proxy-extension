@@ -2,11 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-global:
-  imageRegistry: ""
-  imagePullSecrets: []
-
-
 nameOverride: ""
 fullnameOverride: ""
 
@@ -19,7 +14,10 @@ image:
 
 replicaCount: 1
 
-
+domain: ""
+authentication:
+  enabled: false
+  blacklist: []
 
 configs: []
 # - name: prometheus
@@ -62,7 +60,7 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 80
+  portNumber: 80
 
 ingress:
   enabled: false

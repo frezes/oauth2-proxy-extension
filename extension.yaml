@@ -1,6 +1,6 @@
 apiVersion: kubesphere.io/v1alpha1
 name: oauth2-proxy
-version: 7.6.0
+version: 7.6.1
 displayName:
   zh: OAuth2-Proxy 
   en: OAuth2-Proxy 
@@ -15,9 +15,7 @@ keywords:
   - authentication
 home: https://kubesphere.io
 sources:
-  - https://github.com/frezes/oauth2-proxy-extension
   - https://github.com/oauth2-proxy/oauth2-proxy
-  - https://github.com/oauth2-proxy/manifests
 kubeVersion: ">=1.19.0-0"
 ksVersion: ">=4.0.0-0"
 maintainers:
@@ -49,3 +47,5 @@ installationMode: HostOnly
 images:
   - quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
   - docker.io/openresty/openresty:1.21.4.1-0-alpine
+docs:
+  https://oauth2-proxy.github.io/oauth2-proxy/

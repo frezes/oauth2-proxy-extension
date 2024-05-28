@@ -1,24 +1,44 @@
 openresty:
   enabled: true
   image:
-    registry: docker.io
-    repository: openresty/openresty
+    repository: docker.io/openresty/openresty
     tag: "1.21.4.1-0-alpine"
-  configs: []
-  # - name: prometheus
-  #   description: KubeSphere 监控栈内部 Prometheus 端点
-  #   subPath: /prometheus/
-  #   endpoint: http://prometheus-k8s.monitoring.svc:9090/
-  #   additional:
-  #     proxy_set_header Host $host;
-  #     proxy_set_header X-Real-IP $remote_addr;
-  # - name: alertmanager
-  #   description: KubeSphere 监控栈内部 Alertmanager 端点
-  #   subPath: /alertmanager/
-  #   endpoint: http://alertmanager-main.monitoring.svc:9093/
-  #   additional:
-  #     proxy_set_header Host $host;
-  #     proxy_set_header X-Real-IP $remote_addr;
+
+  domain: 'http://172.31.19.4:32080'
+  authentication:
+    enabled: true
+    blacklist: 
+      - admin@kubesphere.io
+
+  service:
+    type: NodePort
+    portNumber: 80
+    nodePort: 32080
+    annotations: {}
+
+  configs:
+    #- name: alertmanager
+    #  description: KubeSphere 监控栈内部 Alertmanager 端点
+    #  subPath: /alertmanager/
+    #  endpoint: http://whizard-notification-alertmanager.kubesphere-monitoring-system.svc:9093/
+    #  additional:
+    #   proxy_set_header Host $host;
+    #   proxy_set_header X-Real-IP $remote_addr;
+    #- name: prometheus
+    #  description: KubeSphere 监控栈内部 Prometheus 端点
+    #  subPath: /prometheus/
+    #  endpoint: http://prometheus-agent-operated.kubesphere-monitoring-system.svc:9090/
+    #  additional:
+    #    proxy_set_header Host $host;
+    #    proxy_set_header X-Real-IP $remote_addr;
+    #- name: whizard
+    #  description: KubeSphere 监控栈内部 Whizard Query UI
+    #  subPath: /whizard/
+    #  endpoint: http://query-frontend-whizard-operated.kubesphere-monitoring-system.svc:10902/
+    #  additional:
+    #    proxy_set_header X-Forwarded-Prefix /whizard;
+    #    proxy_set_header Host $host;
+    #    proxy_set_header X-Real-IP $remote_addr;
 
 oauth2-proxy:
   enabled: true
@@ -37,39 +57,26 @@ oauth2-proxy:
     # existingSecret: secret
     cookieSecret: "IwwLQh_8mE-tRjgLmOhoqiBhQIL6AaRFNXRT9zopNG8="
 
-  extraArgs: 
+  extraArgs:
     provider: oidc
     provider-display-name: "ks-apiserver"
     cookie-secure: false
-    cookie-refresh: 20m
+    cookie-refresh: 1m
+    cookie-expire: 30m
     cookie-name: oauth2-proxy
     cookie-csrf-expire: 15m
     cookie-csrf-per-request: true
-    # service redirect address
-    redirect-url: http://172.31.73.114:32080/oauth2/callback
-    # issuer address
-    oidc-issuer-url: http://172.31.73.114:30880
-    # upstream
+    set-xauthrequest: true
     upstream: http://oauth2-proxy-openresty.extension-oauth2-proxy.svc:80/
-    # tls config
-    # tls-cert-file: /etc/oauth2-proxy/certs/tls.crt  
-    # tls-key-file: /etc/oauth2-proxy/certs/tls.key
+    exclude-logging-path: "/ping,/ready"
+    # issuer address
+    oidc-issuer-url: http://172.31.19.4:30880    
+    # service redirect address
+    redirect-url: http://172.31.19.4:32080/oauth2/callback
 
   service:
-    type: NodePort
-    # when service.type is ClusterIP ...
-    # clusterIP: 192.0.2.20
-    # when service.type is LoadBalancer ...
-    # loadBalancerIP: 198.51.100.40
-    # loadBalancerSourceRanges: 203.0.113.0/24
-    # when service.type is NodePort ...
-    nodePort: 32080
-    portNumber: 80
-    # Protocol set on the service
-    appProtocol: http
-    annotations: {}
-    # foo.io/bar: "true"
-
+    type: ClusterIP
+    portNumber: 4180
 
   # whether to use http or https
   httpScheme: http

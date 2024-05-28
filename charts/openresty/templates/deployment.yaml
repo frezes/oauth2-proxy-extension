@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/index-configmap.yaml") . | sha256sum }}   
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}   
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -36,33 +36,26 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ .Values.service.portNumber }}
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: html
+            - name: config
               mountPath: /usr/local/openresty/nginx/html/index.html
               subPath: index.html
-            - name: conf
+            {{- if .Values.authentication.enabled }}
+            - name: config
+              mountPath: /usr/local/openresty/nginx/scripts/authorize.lua
+              subPath: authorize.lua
+            {{- end }}
+            - name: config
               mountPath: /usr/local/openresty/nginx/conf/nginx.conf
               subPath: nginx.conf
       volumes:
-        - name: conf
+        - name: config
           configMap:
-            name: {{ include "openresty.fullname" . }}-nginx-conf
-            defaultMode: 420
-        - name: html
-          configMap:
-            name: {{ include "openresty.fullname" . }}-index
+            name: {{ include "openresty.fullname" . }}
             defaultMode: 420
       {{- with .Values.nodeSelector }}
       nodeSelector:

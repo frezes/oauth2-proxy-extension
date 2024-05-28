@@ -1,0 +1,248 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openresty.fullname" . }}
+  labels:
+    {{- include "openresty.labels" . | nindent 4 }}
+data:
+{{- if .Values.authentication.enabled }}
+  authorize.lua: |
+    local function authorize()
+        local user_email = ngx.var.x_auth_request_email
+
+        if not user_email then
+            ngx.status = ngx.HTTP_FORBIDDEN
+            ngx.log(ngx.ERR, "Forbidden! User Email is empty.")
+            return ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+
+        local whitelist_user_emails = {
+              {{- range $index, $email := .Values.authentication.blacklist }}
+              {{- if $index }}, {{- end }}"{{ $email }}"
+              {{- end }}
+            }
+        local allowed = false
+
+        for _, email in ipairs(whitelist_user_emails) do
+            if user_email == email then
+                allowed = true
+                break
+            end
+        end
+
+        if not allowed then
+            ngx.status = ngx.HTTP_FORBIDDEN
+            ngx.log(ngx.ERR, "Forbidden! User Email ", user_email,  " is not allowed.")
+            return ngx.exit(ngx.HTTP_FORBIDDEN)
+        end
+    end
+
+    authorize()
+{{- end }}
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Oauth2-Proxy</title>
+      <style>
+        h3 {
+          margin-left: 25px; /* 标题向右移动 25px */
+        }
+        table {
+          border-collapse: collapse;
+          width: calc(100% - 50px); /* 减去左右两侧边距的宽度 */
+          margin-left: 25px; /* 左侧边距 */
+          margin-right: 25px; /* 右侧边距 */
+        }
+        th, td {
+          border: 1px solid black;
+          padding: 8px;
+          text-align: left;
+        }
+        th {
+          background-color: #f2f2f2;
+        }
+      </style>
+      <script>
+        var currentUrl = window.location.href;
+    
+        // 获取所有带有 "dynamic-link" 类的链接元素
+        var links = document.getElementsByClassName("dynamic-link");
+      
+        // 遍历链接元素并设置 href 属性
+        for (var i = 0; i < links.length; i++) {
+          var link = links[i];
+          var path = link.getAttribute("href"); // 获取链接的路径
+      
+          // 构建完整的 URL
+          var url = currentUrl.substring(0, currentUrl.lastIndexOf("/") + 1) + path;
+      
+          // 将 URL 设置为链接的 href 属性
+          link.href = url;
+        }
+      </script>
+    </head>
+    <body>
+      <h3>oauth2-proxy 服务代理列表:</h3>
+      <table>
+        <tr>
+          <th>Service</th>
+          <th>Description</th>
+          <th>Link</th>
+        </tr>
+{{- range .Values.configs }}
+        <tr>
+          <td><a class="dynamic-link" href="{{ .subPath }}">{{ .name }}</a></td>
+          <td>{{ .description }}</td>
+          <td><a class="dynamic-link" href="{{ .subPath }}">{{ .subPath }}</a></td>
+        </tr>
+{{- end }}
+      </table>
+    </body>
+    </html>
+  nginx.conf: |
+    # nginx.conf  --  docker-openresty
+    #
+    # This file is installed to:
+    #   `/usr/local/openresty/nginx/conf/nginx.conf`
+    # and is the file loaded by nginx at startup,
+    # unless the user specifies otherwise.
+    #
+    # It tracks the upstream OpenResty's `nginx.conf`, but removes the `server`
+    # section and adds this directive:
+    #     `include /etc/nginx/conf.d/*.conf;`
+    #
+    # The `docker-openresty` file `nginx.vh.default.conf` is copied to
+    # `/etc/nginx/conf.d/default.conf`.  It contains the `server section
+    # of the upstream `nginx.conf`.
+    #
+    # See https://github.com/openresty/docker-openresty/blob/master/README.md#nginx-config-files
+    #
+
+    #user  nobody;
+    #worker_processes 1;
+
+    # Enables the use of JIT for regular expressions to speed-up their processing.
+    pcre_jit on;
+
+
+
+    #error_log  logs/error.log;
+    #error_log  logs/error.log  notice;
+    #error_log  logs/error.log  info;
+
+    #pid        logs/nginx.pid;
+
+
+    events {
+        worker_connections  1024;
+    }
+
+
+    http {
+        include       mime.types;
+        default_type  application/octet-stream;
+
+
+        server {
+            listen 80;
+            resolver coredns.kube-system.svc.cluster.local valid=10s;
+
+            location /oauth2/ {
+              proxy_pass       http://oauth2-proxy.extension-oauth2-proxy.svc:4180;
+              proxy_set_header Host                    $host;
+              proxy_set_header X-Real-IP               $remote_addr;
+              proxy_set_header X-Auth-Request-Redirect $request_uri;
+              # or, if you are handling multiple domains:
+              # proxy_set_header X-Auth-Request-Redirect $scheme://$host:$server_port$request_uri;
+            }
+            location = /oauth2/auth {
+              proxy_pass       http://oauth2-proxy.extension-oauth2-proxy.svc:4180;
+              proxy_set_header Host             $host;
+              proxy_set_header X-Real-IP        $remote_addr;
+              proxy_set_header X-Forwarded-Uri  $request_uri;
+              # nginx auth_request includes headers but not body
+              proxy_set_header Content-Length   "";
+              proxy_pass_request_body           off;
+            }
+
+            location / {
+              auth_request /oauth2/auth;
+              auth_request_set $x_auth_request_user   $upstream_http_x_auth_request_user;
+              auth_request_set $x_auth_request_email  $upstream_http_x_auth_request_email;
+
+              access_by_lua_file /usr/local/openresty/nginx/scripts/authorize.lua;
+              index  index.html index.htm;
+            }
+
+{{ range .Values.configs }}
+            location {{ .subPath }} {
+              auth_request /oauth2/auth;
+              auth_request_set $x_auth_request_user   $upstream_http_x_auth_request_user;
+              auth_request_set $x_auth_request_email  $upstream_http_x_auth_request_email;
+              access_by_lua_file /usr/local/openresty/nginx/scripts/authorize.lua;
+              proxy_pass {{ .endpoint }};
+{{- with .additional }}
+  {{- toYaml . | nindent 14 }}
+{{- end }}
+            }
+{{ end }}
+
+            # 错误页面处理
+            error_page 401 = @error401;
+
+            location @error401 {
+                return 302 {{ .Values.domain }}/oauth2/start?rd=$request_uri;
+            }
+
+        }
+
+
+        # Enables or disables the use of underscores in client request header fields.
+        # When the use of underscores is disabled, request header fields whose names contain underscores are marked as invalid and become subject to the ignore_invalid_headers directive.
+        # underscores_in_headers off;
+
+        #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+        #                  '$status $body_bytes_sent "$http_referer" '
+        #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+        #access_log  logs/access.log  main;
+
+            # Log in JSON Format
+            # log_format nginxlog_json escape=json '{ "timestamp": "$time_iso8601", '
+            # '"remote_addr": "$remote_addr", '
+            #  '"body_bytes_sent": $body_bytes_sent, '
+            #  '"request_time": $request_time, '
+            #  '"response_status": $status, '
+            #  '"request": "$request", '
+            #  '"request_method": "$request_method", '
+            #  '"host": "$host",'
+            #  '"upstream_addr": "$upstream_addr",'
+            #  '"http_x_forwarded_for": "$http_x_forwarded_for",'
+            #  '"http_referrer": "$http_referer", '
+            #  '"http_user_agent": "$http_user_agent", '
+            #  '"http_version": "$server_protocol", '
+            #  '"nginx_access": true }';
+            # access_log /dev/stdout nginxlog_json;
+
+        # See Move default writable paths to a dedicated directory (#119)
+        # https://github.com/openresty/docker-openresty/issues/119
+        client_body_temp_path /var/run/openresty/nginx-client-body;
+        proxy_temp_path       /var/run/openresty/nginx-proxy;
+        fastcgi_temp_path     /var/run/openresty/nginx-fastcgi;
+        uwsgi_temp_path       /var/run/openresty/nginx-uwsgi;
+        scgi_temp_path        /var/run/openresty/nginx-scgi;
+
+        sendfile        on;
+        #tcp_nopush     on;
+
+        keepalive_timeout  30;
+
+        #gzip  on;
+
+        include /etc/nginx/conf.d/*.conf;
+
+        # Don't reveal OpenResty version to clients.
+        # server_tokens off;
+    }
